@@ -1,0 +1,86 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <link rel="icon" href="/icon-128x128.png" type="image/png">
+    <meta name="description" content="Eine App, die die verbleibenden Arbeitstage bis zum Ende des Jahres berechnet.">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <title>Arbeitstage bis Ende des Jahres</title>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const endOfYearDate = new Date('2024-12-31'); // Letzter Tag des Jahres
+            const holidays = [
+                new Date('2024-11-01'), // Beispiel: Feiertag (Allerheiligen)
+            ];
+
+            function calculateWorkingDays(startDate, endDate) {
+                let currentDate = new Date(startDate);
+                let workingDays = 0;
+                while (currentDate <= endDate) {
+                    const day = currentDate.getDay();
+                    const isHoliday = holidays.some(holiday => holiday.getTime() === currentDate.getTime());
+                    
+                    if (day !== 0 && day !== 6 && !isHoliday) { // Montag bis Freitag, ohne Samstag, Sonntag und Feiertage
+                        workingDays++; // Arbeitstag zählen
+                    }
+                    currentDate.setDate(currentDate.getDate() + 1);
+                }
+                return workingDays;
+            }
+
+            const today = new Date();
+            const daysUntilEndOfYear = calculateWorkingDays(today, endOfYearDate);
+
+            document.getElementById('days-to-end-of-year').textContent = daysUntilEndOfYear;
+        });
+    </script>
+</head>
+<body class="grey lighten-4">
+    <nav>
+        <div class="nav-wrapper teal darken-3">
+            <a href="#" class="brand-logo center">Arbeitstage Zähler</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="section">
+            <h4 class="center-align">Arbeitstage bis Ende des Jahres</h4>
+            <div class="card">
+                <div class="card-content">
+                    <p class="flow-text">Arbeitstage bis zum Ende des Jahres (31. Dezember): <span id="days-to-end-of-year" class="teal-text text-darken-3"></span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./sw.js').then(function(registration) {
+                console.log('Service Worker registriert mit Scope:', registration.scope);
+                // Listen for updates to the service worker
+                registration.onupdatefound = function() {
+                    const installingWorker = registration.installing;
+                    installingWorker.onstatechange = function() {
+                        if (installingWorker.state === 'installed') {
+                            if (navigator.serviceWorker.controller) {
+                                // New update available
+                                console.log('Neue Version verfügbar. Bitte die Seite aktualisieren.');
+                                M.toast({html: 'Neue Version verfügbar! Bitte aktualisieren Sie die Seite.', classes: 'teal darken-3'});
+                            } else {
+                                // Content is cached for offline use
+                                console.log('Inhalte wurden gecached, um offline genutzt zu werden.');
+                            }
+                        }
+                    };
+                };
+            }).catch(function(error) {
+                console.error('Service Worker Registrierung fehlgeschlagen:', error);
+            });
+        }
+    </script>
+</body>
+</html>
