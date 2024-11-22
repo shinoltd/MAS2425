@@ -1,19 +1,218 @@
-<!-- index.html -->
 <!DOCTYPE html>
 <html lang="de">
 <head>
     <link rel="icon" href="/icon-128x128.png" type="image/png">
-    <meta name="description" content="Eine App, die die verbleibenden Arbeitstage bis zum Ende des Jahres berechnet.">
+    <meta name="description" content="Eine vollständige PWA mit Arbeitstagen, Media, Standort und Orientierung.">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
-    <title>Arbeitstage bis Ende des Jahres</title>
+    <title>Complete PWA Demo</title>
+    <style>
+        #logoContainer {
+            perspective: 1000px;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 200px;
+        }
+        #imgLogo {
+            width: 100px;
+            height: 100px;
+            transition: transform 0.1s ease-out;
+            background-color: #009688;
+            border-radius: 10px;
+        }
+        .orientation-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #009688;
+        }
+        .collection-item {
+            transition: background-color 0.3s ease;
+        }
+        .collection-item:hover {
+            background-color: #f5f5f5;
+        }
+    </style>
     <script>
+        // Media Funktionen
+        function getUserMedia(constraints) {
+            if (navigator.mediaDevices) {
+                return navigator.mediaDevices.getUserMedia(constraints);
+            }
+            
+            var legacyApi = navigator.getUserMedia || navigator.webkitGetUserMedia ||
+                navigator.mozGetUserMedia || navigator.msGetUserMedia;
+                
+            if (legacyApi) {
+                return new Promise(function (resolve, reject) {
+                    legacyApi.bind(navigator)(constraints, resolve, reject);
+                });
+            }
+        }
+
+        function getStream(type) {
+            if (!navigator.mediaDevices && !navigator.getUserMedia && !navigator.webkitGetUserMedia &&
+                !navigator.mozGetUserMedia && !navigator.msGetUserMedia) {
+                M.toast({html: 'User Media API wird nicht unterstützt.', classes: 'red'});
+                return;
+            }
+
+            var constraints = {};
+            constraints[type] = true;
+            
+            getUserMedia(constraints)
+                .then(function (stream) {
+                    var mediaControl = document.querySelector('#' + type);
+                    
+                    if ('srcObject' in mediaControl) {
+                        mediaControl.srcObject = stream;
+                    } else if (navigator.mozGetUserMedia) {
+                        mediaControl.mozSrcObject = stream;
+                    } else {
+                        mediaControl.src = (window.URL || window.webkitURL).createObjectURL(stream);
+                    }
+                    
+                    mediaControl.play();
+                    M.toast({html: type + ' wurde erfolgreich aktiviert', classes: 'teal'});
+                })
+                .catch(function (err) {
+                    M.toast({html: 'Fehler: ' + err, classes: 'red'});
+                });
+        }
+
+        // Geolocation Funktionen
+        let watchId;
+
+        function appendLocation(location, verb) {
+            verb = verb || 'aktualisiert';
+            const locationList = document.getElementById('location-list');
+            const newLocation = document.createElement('div');
+            newLocation.className = 'collection-item';
+            
+            const lat = location.coords.latitude.toFixed(6);
+            const lon = location.coords.longitude.toFixed(6);
+            const timestamp = new Date().toLocaleTimeString();
+            
+            newLocation.innerHTML = `
+                <span class="title">Standort ${verb}</span>
+                <p>
+                    Breite: ${lat}<br>
+                    Länge: ${lon}<br>
+                    Zeit: ${timestamp}
+                </p>
+            `;
+            
+            locationList.insertBefore(newLocation, locationList.firstChild);
+            
+            if (locationList.children.length > 10) {
+                locationList.removeChild(locationList.lastChild);
+            }
+        }
+
+        function startLocationTracking() {
+            if ('geolocation' in navigator) {
+                navigator.geolocation.getCurrentPosition(
+                    function(location) {
+                        appendLocation(location, 'ermittelt');
+                        M.toast({html: 'Standort erfolgreich ermittelt', classes: 'teal'});
+                    },
+                    function(error) {
+                        M.toast({html: 'Fehler beim Ermitteln des Standorts: ' + error.message, classes: 'red'});
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 5000,
+                        maximumAge: 0
+                    }
+                );
+
+                watchId = navigator.geolocation.watchPosition(
+                    function(location) {
+                        appendLocation(location);
+                    },
+                    function(error) {
+                        M.toast({html: 'Fehler bei der Standortüberwachung: ' + error.message, classes: 'red'});
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 5000,
+                        maximumAge: 0
+                    }
+                );
+
+                document.getElementById('startTracking').style.display = 'none';
+                document.getElementById('stopTracking').style.display = 'inline-block';
+            }
+        }
+
+        function stopLocationTracking() {
+            if (watchId) {
+                navigator.geolocation.clearWatch(watchId);
+                watchId = null;
+                M.toast({html: 'Standortüberwachung beendet', classes: 'teal'});
+                document.getElementById('startTracking').style.display = 'inline-block';
+                document.getElementById('stopTracking').style.display = 'none';
+            }
+        }
+
+        // Geräteorientierung Funktionen
+        function initDeviceOrientation() {
+            if ('DeviceOrientationEvent' in window) {
+                if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+                    document.getElementById('orientationPermission').style.display = 'block';
+                } else {
+                    window.addEventListener('deviceorientation', deviceOrientationHandler, false);
+                    M.toast({html: 'Geräteorientierung aktiviert', classes: 'teal'});
+                }
+            }
+        }
+
+        function requestOrientationPermission() {
+            DeviceOrientationEvent.requestPermission()
+                .then(response => {
+                    if (response === 'granted') {
+                        window.addEventListener('deviceorientation', deviceOrientationHandler, false);
+                        document.getElementById('orientationPermission').style.display = 'none';
+                        M.toast({html: 'Geräteorientierung aktiviert', classes: 'teal'});
+                    }
+                })
+                .catch(console.error);
+        }
+
+        function deviceOrientationHandler(eventData) {
+            var tiltLR = eventData.gamma;
+            var tiltFB = eventData.beta;
+            var dir = eventData.alpha;
+
+            document.getElementById("doTiltLR").innerHTML = Math.round(tiltLR || 0);
+            document.getElementById("doTiltFB").innerHTML = Math.round(tiltFB || 0);
+            document.getElementById("doDirection").innerHTML = Math.round(dir || 0);
+
+            var logo = document.getElementById("imgLogo");
+            logo.style.transform = `
+                rotateY(${tiltLR}deg) 
+                rotateX(${tiltFB * -1}deg) 
+                rotateZ(${dir}deg)
+            `;
+        }
+
+        // Arbeitstage Berechnung
         document.addEventListener('DOMContentLoaded', () => {
-            const endOfYearDate = new Date('2024-12-31'); // Letzter Tag des Jahres
+            const endOfYearDate = new Date('2024-12-31');
             const holidays = [
-                new Date('2024-11-01'), // Beispiel: Feiertag (Allerheiligen)
+                new Date('2024-01-01'), // Neujahr
+                new Date('2024-03-29'), // Karfreitag
+                new Date('2024-04-01'), // Ostermontag
+                new Date('2024-05-01'), // Tag der Arbeit
+                new Date('2024-05-09'), // Christi Himmelfahrt
+                new Date('2024-05-20'), // Pfingstmontag
+                new Date('2024-10-03'), // Tag der Deutschen Einheit
+                new Date('2024-11-01'), // Allerheiligen
+                new Date('2024-12-25'), // 1. Weihnachtstag
+                new Date('2024-12-26')  // 2. Weihnachtstag
             ];
 
             function calculateWorkingDays(startDate, endDate) {
@@ -21,10 +220,11 @@
                 let workingDays = 0;
                 while (currentDate <= endDate) {
                     const day = currentDate.getDay();
-                    const isHoliday = holidays.some(holiday => holiday.getTime() === currentDate.getTime());
+                    const isHoliday = holidays.some(holiday => 
+                        holiday.getTime() === currentDate.getTime());
                     
-                    if (day !== 0 && day !== 6 && !isHoliday) { // Montag bis Freitag, ohne Samstag, Sonntag und Feiertage
-                        workingDays++; // Arbeitstag zählen
+                    if (day !== 0 && day !== 6 && !isHoliday) {
+                        workingDays++;
                     }
                     currentDate.setDate(currentDate.getDate() + 1);
                 }
@@ -33,24 +233,107 @@
 
             const today = new Date();
             const daysUntilEndOfYear = calculateWorkingDays(today, endOfYearDate);
-
             document.getElementById('days-to-end-of-year').textContent = daysUntilEndOfYear;
+
+            // Initialisiere Device Orientation
+            initDeviceOrientation();
         });
     </script>
 </head>
 <body class="grey lighten-4">
     <nav>
         <div class="nav-wrapper teal darken-3">
-            <a href="#" class="brand-logo center">Arbeitstage Zähler</a>
+            <a href="#" class="brand-logo center">Complete PWA Demo</a>
         </div>
     </nav>
 
     <div class="container">
         <div class="section">
-            <h4 class="center-align">Arbeitstage bis Ende des Jahres</h4>
+            <!-- Arbeitstage Karte -->
             <div class="card">
                 <div class="card-content">
-                    <p class="flow-text">Arbeitstage bis zum Ende des Jahres (31. Dezember): <span id="days-to-end-of-year" class="teal-text text-darken-3"></span></p>
+                    <span class="card-title">Arbeitstage bis Ende des Jahres</span>
+                    <p class="flow-text">Verbleibende Arbeitstage: 
+                        <span id="days-to-end-of-year" class="teal-text text-darken-3"></span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Media Karte -->
+            <div class="card">
+                <div class="card-content">
+                    <span class="card-title">Medienzugriff</span>
+                    <div class="row">
+                        <div class="col s12 m6">
+                            <video id="video" class="responsive-video" autoplay></video>
+                            <button class="btn waves-effect waves-light teal" 
+                                    onclick="getStream('video')">
+                                Kamera starten
+                            </button>
+                        </div>
+                        <div class="col s12 m6">
+                            <audio id="audio" controls></audio>
+                            <button class="btn waves-effect waves-light teal" 
+                                    onclick="getStream('audio')">
+                                Mikrofon starten
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Standort Karte -->
+            <div class="card">
+                <div class="card-content">
+                    <span class="card-title">Standort</span>
+                    <div class="row">
+                        <div class="col s12">
+                            <button id="startTracking" class="btn waves-effect waves-light teal"
+                                    onclick="startLocationTracking()">
+                                Standortverfolgung starten
+                            </button>
+                            <button id="stopTracking" class="btn waves-effect waves-light red"
+                                    onclick="stopLocationTracking()" style="display: none;">
+                                Standortverfolgung beenden
+                            </button>
+                        </div>
+                    </div>
+                    <div class="collection" id="location-list">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Orientierung Karte -->
+            <div class="card">
+                <div class="card-content">
+                    <span class="card-title">Geräteorientierung</span>
+                    <div class="row">
+                        <div class="col s12 center-align">
+                            <button id="orientationPermission" 
+                                    onclick="requestOrientationPermission()" 
+                                    class="btn waves-effect waves-light teal"
+                                    style="display: none;">
+                                Orientierung erlauben
+                            </button>
+                        </div>
+                    </div>
+                    <div id="logoContainer">
+                        <div id="imgLogo"></div>
+                    </div>
+                    <div class="row center-align">
+                        <div class="col s4">
+                            <p>Links/Rechts</p>
+                            <span id="doTiltLR" class="orientation-value">0</span>°
+                        </div>
+                        <div class="col s4">
+                            <p>Vor/Zurück</p>
+                            <span id="doTiltFB" class="orientation-value">0</span>°
+                        </div>
+                        <div class="col s4">
+                            <p>Richtung</p>
+                            <span id="doDirection" class="orientation-value">0</span>°
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -59,27 +342,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
     <script>
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('./sw.js').then(function(registration) {
-                console.log('Service Worker registriert mit Scope:', registration.scope);
-                // Listen for updates to the service worker
-                registration.onupdatefound = function() {
-                    const installingWorker = registration.installing;
-                    installingWorker.onstatechange = function() {
-                        if (installingWorker.state === 'installed') {
-                            if (navigator.serviceWorker.controller) {
-                                // New update available
-                                console.log('Neue Version verfügbar. Bitte die Seite aktualisieren.');
-                                M.toast({html: 'Neue Version verfügbar! Bitte aktualisieren Sie die Seite.', classes: 'teal darken-3'});
-                            } else {
-                                // Content is cached for offline use
-                                console.log('Inhalte wurden gecached, um offline genutzt zu werden.');
-                            }
-                        }
-                    };
-                };
-            }).catch(function(error) {
-                console.error('Service Worker Registrierung fehlgeschlagen:', error);
-            });
+            navigator.serviceWorker.register('./sw.js');
         }
     </script>
 </body>
