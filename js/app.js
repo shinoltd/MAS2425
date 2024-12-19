@@ -3,6 +3,7 @@ import { getStream } from './media.js';
 import { startLocationTracking, stopLocationTracking } from './location.js';
 import { initDeviceOrientation, requestOrientationPermission } from './orientation.js';
 import { checkStorage, requestPersistence } from './storage.js';
+import { initWebStorage } from './webstorage.js';
 
 // Funktionen global verfügbar machen
 window.getStream = getStream;
@@ -10,6 +11,7 @@ window.startLocationTracking = startLocationTracking;
 window.stopLocationTracking = stopLocationTracking;
 window.requestOrientationPermission = requestOrientationPermission;
 window.requestPersistence = requestPersistence;
+window.showPage = showPage;
 
 // Initialisierung
 document.addEventListener('DOMContentLoaded', function() {
@@ -34,19 +36,33 @@ function showPage(pageId) {
     instance.close();
 }
 
-window.showPage = showPage;
-
 function initializeApp() {
+    // Arbeitstage initialisieren
     const endOfYearDate = new Date('2024-12-31');
     const today = new Date();
     const daysUntilEndOfYear = calculateWorkingDays(today, endOfYearDate);
     document.getElementById('days-to-end-of-year').textContent = daysUntilEndOfYear;
 
+    // Andere Features initialisieren
     initDeviceOrientation();
     checkStorage();
+    
+    // Web Storage initialisieren
+    try {
+        initWebStorage();
+        console.log('Web Storage wurde initialisiert');
+    } catch (error) {
+        console.error('Fehler bei der Web Storage Initialisierung:', error);
+    }
 }
 
 // Service Worker Registration
 if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js');
+    navigator.serviceWorker.register('./sw.js')
+        .then(registration => {
+            console.log('Service Worker erfolgreich registriert');
+        })
+        .catch(error => {
+            console.error('Service Worker Registrierung fehlgeschlagen:', error);
+        });
 }
