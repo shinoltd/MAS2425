@@ -1,10 +1,10 @@
 {
-    "name": "Arbeitstage bis Urlaub",
-    "short_name": "UrlaubCountdown",
+    "name": "PWA Demo MAS",
+    "short_name": "PWAMAS",
     "start_url": "/MAS2425/index.html",
     "display": "standalone",
     "background_color": "#ffffff",
-    "description": "Eine PWA, die die verbleibenden Arbeitstage bis zu deinem Urlaub und bis zum Ende März zählt.",
+    "description": "Eine PWA, die verschiedene Funktionen beinhaltet.",
     "icons": [
         {
             "src": "/MAS2425/icon-128x128.png",
