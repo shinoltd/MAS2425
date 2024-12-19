@@ -10,9 +10,10 @@ const urlsToCache = [
     './js/location.js',
     './js/orientation.js',
     './js/storage.js',
+    './js/webstorage.js',
     'https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css',
     'https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js',
-    'https://fonts.googleapis.com/icon?family=Material+Icons'  // Material Icons hinzugefügt
+    'https://fonts.googleapis.com/icon?family=Material+Icons'
 ];
 
 self.addEventListener('install', (event) => {
@@ -39,9 +40,6 @@ self.addEventListener('activate', (event) => {
     );
     self.clients.claim();
 });
-
-// Version entfernt, da sie nicht benötigt wird
-// version = 77;
 
 self.addEventListener('fetch', (event) => {
     event.respondWith(
