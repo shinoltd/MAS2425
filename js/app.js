@@ -4,6 +4,7 @@ import { startLocationTracking, stopLocationTracking } from './location.js';
 import { initDeviceOrientation, requestOrientationPermission } from './orientation.js';
 import { checkStorage, requestPersistence } from './storage.js';
 import { initWebStorage } from './webstorage.js';
+import { initFileHandling } from './files.js';
 
 // Funktionen global verfügbar machen
 window.getStream = getStream;
@@ -43,17 +44,11 @@ function initializeApp() {
     const daysUntilEndOfYear = calculateWorkingDays(today, endOfYearDate);
     document.getElementById('days-to-end-of-year').textContent = daysUntilEndOfYear;
 
-    // Andere Features initialisieren
+    // Features initialisieren
     initDeviceOrientation();
     checkStorage();
-    
-    // Web Storage initialisieren
-    try {
-        initWebStorage();
-        console.log('Web Storage wurde initialisiert');
-    } catch (error) {
-        console.error('Fehler bei der Web Storage Initialisierung:', error);
-    }
+    initWebStorage();
+    initFileHandling();
 }
 
 // Service Worker Registration
