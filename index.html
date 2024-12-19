@@ -10,16 +10,12 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <title>PWA Demo</title>
     <style>
-        .sidenav {
-            width: 300px;
-        }
+        .sidenav { width: 300px; }
         .page {
             display: none;
             padding: 20px;
         }
-        .page.active {
-            display: block;
-        }
+        .page.active { display: block; }
         #logoContainer {
             perspective: 1000px;
             padding: 20px;
@@ -51,10 +47,23 @@
             overflow-y: auto;
             margin-top: 10px;
         }
-        #storage-log p {
-            margin: 5px 0;
-            font-size: 14px;
+        .file-drop-zone {
+            border: 2px dashed #009688;
+            border-radius: 4px;
+            padding: 20px;
+            text-align: center;
+            margin: 20px 0;
+            transition: all 0.3s ease;
         }
+        .file-drop-zone.drag-over {
+            background-color: rgba(0, 150, 136, 0.1);
+            border-color: #00796b;
+        }
+        .file-info-section { margin: 20px 0; }
+        .file-list .collection-item {
+            transition: background-color 0.3s ease;
+        }
+        .file-info { padding: 10px 0; }
     </style>
 </head>
 <body class="grey lighten-4">
@@ -80,6 +89,7 @@
         <li><a href="#orientation" class="waves-effect" onclick="showPage('orientation')"><i class="material-icons">screen_rotation</i>Orientierung</a></li>
         <li><a href="#storage" class="waves-effect" onclick="showPage('storage')"><i class="material-icons">storage</i>Speicher</a></li>
         <li><a href="#webstorage" class="waves-effect" onclick="showPage('webstorage')"><i class="material-icons">dns</i>Web Storage</a></li>
+        <li><a href="#files" class="waves-effect" onclick="showPage('files')"><i class="material-icons">folder</i>Dateien</a></li>
     </ul>
 
     <!-- Content Pages -->
@@ -229,6 +239,39 @@
                                 <h6>Storage Log:</h6>
                                 <div id="storage-log"></div>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- File Management Page -->
+        <div id="files" class="page">
+            <div class="card">
+                <div class="card-content">
+                    <span class="card-title">Datei-Management</span>
+                    <div class="row">
+                        <div class="col s12">
+                            <div id="drop-zone" class="file-drop-zone">
+                                <div class="center-align">
+                                    <i class="material-icons large">cloud_upload</i>
+                                    <p>Dateien hier ablegen oder</p>
+                                    <input type="file" id="file-input" multiple class="hide">
+                                    <label for="file-input" class="btn waves-effect waves-light teal">
+                                        Dateien auswählen
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="file-info-section">
+                                <p>Anzahl Dateien: <span id="file-count">0</span></p>
+                                <ul id="file-list" class="collection"></ul>
+                            </div>
+
+                            <button id="write-file" class="btn waves-effect waves-light teal">
+                                Neue Datei erstellen
+                                <i class="material-icons right">create_new_folder</i>
+                            </button>
                         </div>
                     </div>
                 </div>
