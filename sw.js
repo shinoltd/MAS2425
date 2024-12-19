@@ -1,12 +1,18 @@
-// sw.js
 const CACHE_NAME = 'workdays-cache-v1';
 const urlsToCache = [
     './',
     './index.html',
     './manifest.json',
     './icon-128x128.png',
+    './js/app.js',
+    './js/arbeitstage.js',
+    './js/media.js',
+    './js/location.js',
+    './js/orientation.js',
+    './js/storage.js',
     'https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css',
-    'https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js'
+    'https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js',
+    'https://fonts.googleapis.com/icon?family=Material+Icons'  // Material Icons hinzugefügt
 ];
 
 self.addEventListener('install', (event) => {
@@ -16,7 +22,7 @@ self.addEventListener('install', (event) => {
                 return cache.addAll(urlsToCache);
             })
     );
-    self.skipWaiting(); // Zwinge den Service Worker sofort zu aktivieren
+    self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
@@ -31,11 +37,11 @@ self.addEventListener('activate', (event) => {
             );
         })
     );
-    self.clients.claim(); // Zwinge die neuen Clients den neuen Service Worker zu verwenden
+    self.clients.claim();
 });
 
-
-version = 77;
+// Version entfernt, da sie nicht benötigt wird
+// version = 77;
 
 self.addEventListener('fetch', (event) => {
     event.respondWith(
